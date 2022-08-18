@@ -1,3 +1,9 @@
 -Q . RobustSafety
 -arg -w -arg -notation-overridden,-redundant-canonical-projection,-several-object-files
 
+theories/persistent_pred.v
+
+theories/lang.v
+theories/rules.v
+theories/logrel.v
+theories/fundamental.v
