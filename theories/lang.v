@@ -9,7 +9,7 @@ Module LambdaRS.
 
   Global Instance loc_dec_eq (l l' : loc) : Decision (l = l') := _.
 
-  Inductive binop := Add | Sub | Mult | Eq | Le | Lt.
+  Inductive binop := Add | Sub | Mult | Div | Rem | Eq | Le | Lt.
 
   Global Instance binop_dec_eq (op op' : binop) : Decision (op = op').
   Proof. solve_decision. Defined.
@@ -81,9 +81,11 @@ Module LambdaRS.
     | Add => λ a b, #nv(a + b)
     | Sub => λ a b, #nv(a - b)
     | Mult => λ a b, #nv(a * b)
-    | Eq => λ a b, if (eq_nat_dec a b) then #♭v true else #♭v false
-    | Le => λ a b, if (le_dec a b) then #♭v true else #♭v false
-    | Lt => λ a b, if (lt_dec a b) then #♭v true else #♭v false
+    | Div => λ a b, #nv(a `div` b)
+    | Rem => λ a b, #nv(a `mod` b)
+    | Eq => λ a b, #♭v (bool_decide (a = b))
+    | Le => λ a b, #♭v (bool_decide (a ≤ b))
+    | Lt => λ a b, #♭v (bool_decide (a < b))
     end.
 
   Global Instance val_dec_eq (v v' : val) : Decision (v = v').
@@ -388,6 +390,8 @@ Proof.
     rewrite -lookup_tail /=.
     apply IHx.
 Qed.
+
+(* classification of values. *)
 
 Inductive non_nat_val : val → Prop :=
 | NN_RecV e : non_nat_val (RecV e)

@@ -348,39 +348,39 @@ Section typed_interp.
   Qed.
 
   (* an adversary proram is any program with no hard-coded locations or assert statements. *)
-  Fixpoint valid_adversary_program (e : expr) : Prop :=
+  Fixpoint valid_adversary (e : expr) : Prop :=
     match e with
     | Var _ => True
-    | Rec e => valid_adversary_program e
-    | App e1 e2 => valid_adversary_program e1 ∧ valid_adversary_program e2
-    | Lam e => valid_adversary_program e
-    | LetIn e1 e2 => valid_adversary_program e1 ∧ valid_adversary_program e2
-    | Seq e1 e2 => valid_adversary_program e1 ∧ valid_adversary_program e2
+    | Rec e => valid_adversary e
+    | App e1 e2 => valid_adversary e1 ∧ valid_adversary e2
+    | Lam e => valid_adversary e
+    | LetIn e1 e2 => valid_adversary e1 ∧ valid_adversary e2
+    | Seq e1 e2 => valid_adversary e1 ∧ valid_adversary e2
     | Unit => True
     | Nat n => True
     | Bool b => True
-    | BinOp op e1 e2 => valid_adversary_program e1 ∧ valid_adversary_program e2
+    | BinOp op e1 e2 => valid_adversary e1 ∧ valid_adversary e2
     | If e0 e1 e2 =>
-        valid_adversary_program e0 ∧ valid_adversary_program e1 ∧ valid_adversary_program e2
-    | Pair e1 e2 => valid_adversary_program e1 ∧ valid_adversary_program e2
-    | Fst e => valid_adversary_program e
-    | Snd e => valid_adversary_program e
-    | InjL e => valid_adversary_program e
-    | InjR e => valid_adversary_program e
+        valid_adversary e0 ∧ valid_adversary e1 ∧ valid_adversary e2
+    | Pair e1 e2 => valid_adversary e1 ∧ valid_adversary e2
+    | Fst e => valid_adversary e
+    | Snd e => valid_adversary e
+    | InjL e => valid_adversary e
+    | InjR e => valid_adversary e
     | Case e0 e1 e2 =>
-        valid_adversary_program e0 ∧ valid_adversary_program e1 ∧ valid_adversary_program e2
-    | Fork e => valid_adversary_program e
+        valid_adversary e0 ∧ valid_adversary e1 ∧ valid_adversary e2
+    | Fork e => valid_adversary e
     | Loc l => False
-    | Alloc e => valid_adversary_program e
-    | Load e => valid_adversary_program e
-    | Store e1 e2 => valid_adversary_program e1 ∧ valid_adversary_program e2
+    | Alloc e => valid_adversary e
+    | Load e => valid_adversary e
+    | Store e1 e2 => valid_adversary e1 ∧ valid_adversary e2
     | CAS e0 e1 e2 =>
-        valid_adversary_program e0 ∧ valid_adversary_program e1 ∧ valid_adversary_program e2
-    | FAA e1 e2 => valid_adversary_program e1 ∧ valid_adversary_program e2
+        valid_adversary e0 ∧ valid_adversary e1 ∧ valid_adversary e2
+    | FAA e1 e2 => valid_adversary e1 ∧ valid_adversary e2
     | Assert e => False
     end.
 
-  Theorem fundamental e : valid_adversary_program e → ⊢ logrel e.
+  Theorem fundamental e : valid_adversary e → ⊢ logrel e.
   Proof.
     induction e; intros Hedv; simpl in *; intuition.
     - iApply logrel_var; done.

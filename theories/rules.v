@@ -14,6 +14,16 @@ Class heapIG Σ := HeapIG {
   heapI_gen_heapG :> gen_heapGS loc val Σ;
 }.
 
+Class heapPG Σ := HeapPG {
+  heapP_invG : invGpreS Σ;
+  heapP_gen_heapG :> gen_heapGpreS loc val Σ;
+}.
+
+Definition heapΣ := #[invΣ; gen_heapΣ loc val].
+
+Global Instance: ∀ Σ, subG heapΣ Σ → heapPG Σ.
+Proof. solve_inG. Qed.
+
 Global Instance heapIG_irisG `{heapIG Σ} : irisGS LambdaRS_lang Σ := {
   iris_invGS := heapI_invG;
   num_laters_per_step _ := 0;
