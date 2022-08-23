@@ -2,7 +2,7 @@ From iris.program_logic Require Import lifting adequacy.
 From RobustSafety Require Import lang rules logrel fundamental.
 From iris.proofmode Require Import tactics.
 
-(* The program 'prog' below corresponfs to the following program:
+(* The program 'prog' below corresponds to the following program:
 
 let l = ref(0) in
 let add2 () = FAA(l, 2); () in
