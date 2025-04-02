@@ -11,12 +11,12 @@ From iris.prelude Require Import options.
     physical heap. *)
 Class heapIG Σ := HeapIG {
   heapI_invG : invGS Σ;
-  heapI_gen_heapG :> gen_heapGS loc val Σ;
+  heapI_gen_heapG :: gen_heapGS loc val Σ;
 }.
 
 Class heapPG Σ := HeapPG {
   heapP_invG : invGpreS Σ;
-  heapP_gen_heapG :> gen_heapGpreS loc val Σ;
+  heapP_gen_heapG :: gen_heapGpreS loc val Σ;
 }.
 
 Definition heapΣ := #[invΣ; gen_heapΣ loc val].
@@ -32,13 +32,13 @@ Global Instance heapIG_irisG `{heapIG Σ} : irisGS LambdaRS_lang Σ := {
   state_interp_mono _ _ _ _ := fupd_intro _ _
 }.
 
-Notation "l ↦{ dq } v" := (mapsto (L:=loc) (V:=val) l dq v)
+Notation "l ↦{ dq } v" := (pointsto (L:=loc) (V:=val) l dq v)
   (at level 20, format "l  ↦{ dq }  v") : bi_scope.
-Notation "l ↦□ v" := (mapsto (L:=loc) (V:=val) l DfracDiscarded v)
+Notation "l ↦□ v" := (pointsto (L:=loc) (V:=val) l DfracDiscarded v)
   (at level 20, format "l  ↦□  v") : bi_scope.
-Notation "l ↦{# q } v" := (mapsto (L:=loc) (V:=val) l (DfracOwn q) v)
+Notation "l ↦{# q } v" := (pointsto (L:=loc) (V:=val) l (DfracOwn q) v)
   (at level 20, format "l  ↦{# q }  v") : bi_scope.
-Notation "l ↦ v" := (mapsto (L:=loc) (V:=val) l (DfracOwn 1) v)
+Notation "l ↦ v" := (pointsto (L:=loc) (V:=val) l (DfracOwn 1) v)
   (at level 20, format "l  ↦  v") : bi_scope.
 
 Section lang_rules.
@@ -62,7 +62,7 @@ Section lang_rules.
   end.
 
   Local Hint Extern 0 (atomic _) => solve_atomic : core.
-  Local Hint Extern 0 (head_reducible _ _) => eexists _, _, _, _; simpl : core.
+  Local Hint Extern 0 (base_reducible _ _) => eexists _, _, _, _; simpl : core.
 
   Local Hint Constructors head_step : core.
   Local Hint Resolve alloc_fresh : core.
@@ -73,7 +73,7 @@ Section lang_rules.
     IntoVal e v →
     {{{ True }}} Alloc e @ E {{{ l, RET (LocV l); l ↦ v }}}.
   Proof.
-    iIntros (<- Φ) "_ HΦ". iApply wp_lift_atomic_head_step_no_fork; auto.
+    iIntros (<- Φ) "_ HΦ". iApply wp_lift_atomic_base_step_no_fork; auto.
     iIntros (σ1 ????) "[Hh Hfl] !>"; iSplit; first by auto.
     iNext; iIntros (v2 σ2 efs Hstep) "_"; inv_head_step.
     iMod (@gen_heap_alloc with "Hh") as "(Hh & Hl & _)"; first done.
@@ -83,7 +83,7 @@ Section lang_rules.
   Lemma wp_load E l dq v :
     {{{ ▷ l ↦{dq} v }}} Load (Loc l) @ E {{{ RET v; l ↦{dq} v }}}.
   Proof.
-    iIntros (Φ) ">Hl HΦ". iApply wp_lift_atomic_head_step_no_fork; auto.
+    iIntros (Φ) ">Hl HΦ". iApply wp_lift_atomic_base_step_no_fork; auto.
     iIntros (σ1 ????) "[Hh Hfl] !>". iDestruct (@gen_heap_valid with "Hh Hl") as %?.
     iSplit; first by eauto.
     iNext; iIntros (v2 σ2 efs Hstep) "_"; inv_head_step.
@@ -96,7 +96,7 @@ Section lang_rules.
     {{{ RET UnitV; l ↦ v }}}.
   Proof.
     iIntros (<- Φ) ">Hl HΦ".
-    iApply wp_lift_atomic_head_step_no_fork; auto.
+    iApply wp_lift_atomic_base_step_no_fork; auto.
     iIntros (σ1 ????) "[Hh Hfl] !>". iDestruct (@gen_heap_valid with "Hh Hl") as %?.
     iSplit; first by eauto. iNext; iIntros (v2 σ2 efs Hstep) "_"; inv_head_step.
     iMod (@gen_heap_update with "Hh Hl") as "[$ Hl]".
@@ -109,7 +109,7 @@ Section lang_rules.
     {{{ RET (BoolV false); l ↦{dq} v' }}}.
   Proof.
     iIntros (<- <- ? Φ) ">Hl HΦ".
-    iApply wp_lift_atomic_head_step_no_fork; auto.
+    iApply wp_lift_atomic_base_step_no_fork; auto.
     iIntros (σ1 ????) "[Hh Hfl] !>". iDestruct (@gen_heap_valid with "Hh Hl") as %?.
     iSplit; first by eauto.
     iNext; iIntros (v2' σ2 efs Hstep) "_"; inv_head_step.
@@ -122,7 +122,7 @@ Section lang_rules.
     {{{ RET (BoolV true); l ↦ v2 }}}.
   Proof.
     iIntros (<- <- Φ) ">Hl HΦ".
-    iApply wp_lift_atomic_head_step_no_fork; auto.
+    iApply wp_lift_atomic_base_step_no_fork; auto.
     iIntros (σ1 ????) "[Hh Hfl] !>". iDestruct (@gen_heap_valid with "Hh Hl") as %?.
     iSplit; first by eauto. iNext; iIntros (v2' σ2 efs Hstep) "_"; inv_head_step.
     iMod (@gen_heap_update with "Hh Hl") as "[$ Hl]".
@@ -135,7 +135,7 @@ Section lang_rules.
     {{{ RET (#nv m); l ↦ #nv (m + k) }}}.
   Proof.
     iIntros (<- Φ) ">Hl HΦ".
-    iApply wp_lift_atomic_head_step_no_fork; auto.
+    iApply wp_lift_atomic_base_step_no_fork; auto.
     iIntros (σ1 ????) "[Hh Hfl] !>". iDestruct (@gen_heap_valid with "Hh Hl") as %?.
     iSplit; first by eauto. iNext; iIntros (v2' σ2 efs Hstep) "_"; inv_head_step.
     iMod (@gen_heap_update with "Hh Hl") as "[$ Hl]".
@@ -145,7 +145,7 @@ Section lang_rules.
   Lemma wp_fork E s e Φ :
     ▷ (|={E}=> Φ UnitV) ∗ ▷ WP e @ s; ⊤ {{ _, True }} ⊢ WP Fork e @ s; E {{ Φ }}.
   Proof.
-    iIntros "[He HΦ]". iApply wp_lift_atomic_head_step; [done|].
+    iIntros "[He HΦ]". iApply wp_lift_atomic_base_step; [done|].
     iIntros (σ1 ????) "Hσ !>"; iSplit; first by eauto.
     iNext; iIntros (v2 σ2 efs Hstep) "_"; inv_head_step. by iFrame.
   Qed.
@@ -155,7 +155,7 @@ Section lang_rules.
   Local Ltac solve_pure_exec :=
     unfold IntoVal in *;
     repeat match goal with H : AsVal _ |- _ => destruct H as [??] end; subst;
-    intros ?; apply nsteps_once, pure_head_step_pure_step;
+    intros ?; apply nsteps_once, pure_base_step_pure_step;
       constructor; [solve_exec_safe | solve_exec_puredet].
 
   Global Instance pure_rec e1 e2 `{!AsVal e2} :
@@ -211,7 +211,7 @@ Section lang_rules.
 
   Lemma var_stuck x Φ : ⊢ WP Var x ? {{v, Φ v}}.
   Proof.
-    iApply wp_lift_pure_head_stuck; [done| |by split; [done|inversion 1]].
+    iApply wp_lift_pure_base_stuck; [done| |by split; [done|inversion 1]].
     intros K ?; destruct K as [|[]] using rev_ind; simpl; try rewrite fill_app; inversion 1; done.
   Qed.
 
@@ -220,7 +220,7 @@ Section lang_rules.
     ⊢ WP BinOp op (of_val v1) (of_val v2) ? {{v, Φ v}}.
   Proof.
     intros Hnn.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       + inversion 1 as [[Heqop Heq]]; simplify_eq.
@@ -237,7 +237,7 @@ Section lang_rules.
   Lemma fst_stuck v Φ : non_pair_val v → ⊢ WP Fst (of_val v) ? {{w, Φ w}}.
   Proof.
     intros Hnp.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       inversion 1 as [[Heq]]; simplify_eq.
@@ -250,7 +250,7 @@ Section lang_rules.
   Lemma snd_stuck v Φ : non_pair_val v → ⊢ WP Snd (of_val v) ? {{w, Φ w}}.
   Proof.
     intros Hnp.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       inversion 1 as [[Heq]]; simplify_eq.
@@ -263,7 +263,7 @@ Section lang_rules.
   Lemma case_stuck v e1 e2 Φ : non_sum_val v → ⊢ WP Case (of_val v) e1 e2 ? {{w, Φ w}}.
   Proof.
     intros Hns.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       inversion 1 as [[Heq]]; simplify_eq.
@@ -276,7 +276,7 @@ Section lang_rules.
   Lemma if_stuck v e1 e2 Φ : non_bool_val v → ⊢ WP If (of_val v) e1 e2 ? {{w, Φ w}}.
   Proof.
     intros Hnb.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       inversion 1 as [[Heq]]; simplify_eq.
@@ -289,7 +289,7 @@ Section lang_rules.
   Lemma app_stuck v1 v2 Φ : non_fun_val v1 → ⊢ WP App (of_val v1) (of_val v2) ? {{w, Φ w}}.
   Proof.
     intros Hnf.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       + inversion 1 as [[Heq]]; simplify_eq.
@@ -305,7 +305,7 @@ Section lang_rules.
   Lemma load_stuck v Φ : non_loc_val v → ⊢ WP Load (of_val v) ? {{w, Φ w}}.
   Proof.
     intros Hnl.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       inversion 1 as [[Heq]]; simplify_eq.
@@ -318,7 +318,7 @@ Section lang_rules.
   Lemma store_stuck v1 v2 Φ : non_loc_val v1 → ⊢ WP Store (of_val v1) (of_val v2) ? {{w, Φ w}}.
   Proof.
     intros Hnl.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       + inversion 1 as [[Heq]]; simplify_eq.
@@ -335,7 +335,7 @@ Section lang_rules.
     non_loc_val v1 → ⊢ WP CAS (of_val v1) (of_val v2) (of_val v3) ? {{w, Φ w}}.
   Proof.
     intros Hnl.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       + inversion 1 as [[Heq]]; simplify_eq.
@@ -355,7 +355,7 @@ Section lang_rules.
     non_loc_val v1 ∨ non_nat_val v2 → ⊢ WP FAA (of_val v1) (of_val v2) ? {{w, Φ w}}.
   Proof.
     intros Hnln.
-    iApply wp_lift_pure_head_stuck; [done| |].
+    iApply wp_lift_pure_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       + inversion 1 as [[Heq]]; simplify_eq.
@@ -377,7 +377,7 @@ Section lang_rules.
     non_nat_val v → l ↦ v ⊢ WP FAA (Loc l) (#n n) @ E ? {{w, Φ w}}.
   Proof.
     iIntros (Hnn) "Hl".
-    iApply wp_lift_head_stuck; [done| |].
+    iApply wp_lift_base_stuck; [done| |].
     - intros K e';
         destruct K as [|[] ? _] using rev_ind; simpl; try rewrite fill_app; try by inversion 1.
       + inversion 1 as [[Heq]]; simplify_eq.
