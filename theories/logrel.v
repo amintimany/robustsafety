@@ -42,8 +42,9 @@ Section logrel.
     f_equiv.
     - solve_contractive.
     - apply wp_contractive; first apply _.
-      destruct n; first done.
-      apply Hinterps.
+      destruct n.
+      { simpl in *. constructor. lia. }
+      simpl. constructor. intros. by apply Hinterps.
   Qed.
 
   Program Definition interp_ref_inv (l : loc) : D -n> iPropO Σ :=
